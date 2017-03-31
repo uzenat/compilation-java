@@ -84,15 +84,6 @@ let bind_function_formals env f formals =
 let bind_function_variables env formals =
   List.fold_left (fun a x -> bind_variable a x |> snd) env formals
 
-(** [bind_function env0 f formals] update environment with
-    bind_function_label and bind_function_formals and return
-    the unique label and the new environment *)
-(* let bind_function env0 f formals = *)
-(*   let fl, env1 = bind_function_label env0 f          in *)
-(*   let env2 = bind_function_formals env1 f formals    in *)
-(*   let env3 = bind_function_variables env2 formals    in *)
-(*   fl, env3 *)
-
 let clear_all_variables env = {env with variables = []; nextvar = 0}
 
 (** For return addresses (or later higher-order functions),
@@ -434,50 +425,3 @@ and compile_cond_instr env lbl = function
   | _ as e ->
     let e' = expression not_tail unbox_it env e  in
     e' @ push 1 @ no_lbl (cmpop_to_javix lbl S.Eq)
-
-(** Remarks:
-    - When using this compiler from fopix to javix, flap will
-    produce some .j files.
-    + Compile them to .class via: jasmin Foobar.j
-    + Run them with: java -noverify Foobar
-
-    - Final answer:
-    your code should contain a final [Ireturn] that should
-    return the value of the last DefineValue (supposed to be
-    an Integer).
-
-    - Function Call Convention:
-    + The n arguments should be in jvm's variables 0,1,...(n-1).
-    + At least the variables that are reused after this call
-      should have their contents saved in stack before the call
-      and restored afterwards.
-    + Just before the function call, the return address should
-      be placed on the stack (via the encoding as number of this
-      return label, see Labels.encode).
-    + When the function returns, the result should be on the top
-      of the stack.
-
-    - Boxing:
-    The stack could contain both unboxed elements (Java int)
-    or boxed elements (Java objects such as Integer or java arrays).
-    We place into variables or in array cells only boxed values.
-    The arithmetical operations (iadd, if_icmpeq, ...) only works
-    on unboxed numbers.
-    Conversion between int and Integer is possible via the
-    Box and Unboxed pseudo-instructions (translated into correct
-    calls to some ad-hoc methods we provide). You may try to
-    do some obvious optimisations such as removing [Box;Unbox] or
-    [Unbox;Box].
-
-    - Tail-recursive calls : if the body of f ends with a call to
-    another function g (which may be f itself in case of recursion),
-    no need to save any variables, nor to push a new return address:
-    just reuse the return address of the current call to f when
-    jumping to g !
-
-    - Variable size and stack size
-    Your code should determine the number of variables used by the
-    produced code. You might also try to compute the maximum
-    stack size when the code is non-recursive or 100% tail-recursive.
-
-*)
