@@ -1,0 +1,5 @@
+#!/bin/sh
+
+./flap.native -s fopix -t jakix -V $1.fx
+jasmin $1.k
+java $2 $1
